@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Ntsolo Mania",
+    "slug": "ntxulo-mania",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#1c1917",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1c1917"
+    },
+    "platforms": ["web", "android"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.milagre.ntxulo"
+    },
+    "android": {
+      "package": "com.milagre.ntxulo",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#1c1917"
+      },
+      "splash": {
+        "backgroundColor": "#1c1917",
+        "resizeMode": "contain"
+      },
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 23,
+      "buildToolsVersion": "34.0.0"
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "99f0f714-e566-4e97-a608-65c00a223a2e"
+      },
+      "developer": "Milagre Lazaro Nicodemos",
+      "gameName": "Ntsolo Mania",
+      "credit": "Nome dado por Nelo Augusto Chaquisse"
+    }
+  }
+}

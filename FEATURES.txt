@@ -1,0 +1,7 @@
+NTXUVA EDUCATIVO - Funcionalidades Planejadas
+
+1. Tamanhos: 4x4, 4x6, 4x8, 4x10
+2. Pecas: Berlindes, Pedras, Sementes, Frutas, Estrelas, Diamantes
+3. Modo Aprendiz com dicas visuais
+4. Analise de jogadas
+5. Tutorial interativo
