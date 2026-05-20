@@ -23,7 +23,100 @@ function countPlayerPieces(board,player){return getPlayerIndices(player).reduce(
 function isPhaseTwo(board){return board.every(c=>c<=1)}
 function getValidMoves(board,player){const moves=[],indices=getPlayerIndices(player),phase2=isPhaseTwo(board);for(const idx of indices){if(board[idx]===0)continue;if(phase2){if(board[idx]===1)moves.push(idx)}else moves.push(idx)}return moves}
 
-function calculateMoveSteps(board,idx,player){const steps=[];let b=[...board],seeds=b[idx];b[idx]=0;let current=idx;const playerTotal=countPlayerPieces(board,player);const opponent=player===1?2:1;const isSuperSeed=playerTotal===1&&seeds===1;steps.push({type:'pickup',idx,count:seeds,isSuperSeed});let continueLoop=true;let safety=0;while(continueLoop&&safety<100){safety++;if(isSuperSeed&&seeds===1){for(let i=0;i<3;i++){current=nextIndex(current,player);b[current]+=1;seeds-=1;steps.push({type:'drop',idx:current,board:[...b],isSuperSeed})}if(isAttackRow(current,player)){const oppAtk=opponentAttackHouse(current,player),oppDef=opponentDefenseHouse(current,player);if(b[oppAtk]>0||true){let totalCaptured=b[oppAtk]+b[oppDef];steps.push({type:'capture',idx:current,oppAtk,oppDef,count:totalCaptured,isSuperSeed});b[oppAtk]=0;b[oppDef]=0;seeds=totalCaptured;if(seeds>0){continue}else{continueLoop=false;break}}}continueLoop=false;break}while(seeds>0){current=nextIndex(current,player);b[current]+=1;seeds-=1;steps.push({type:'drop',idx:current,board:[...b]})}if(b[current]===0){continueLoop=false;break}const hadSeedsBeforeDrop=b[current]>1;if(!hadSeedsBeforeDrop){continueLoop=false;break}if(isAttackRow(current,player)){const oppAtk=opponentAttackHouse(current,player),oppDef=opponentDefenseHouse(current,player);if(b[oppAtk]>0){let totalCaptured=b[oppAtk]+b[oppDef];steps.push({type:'capture',idx:current,oppAtk,oppDef,count:totalCaptured});b[oppAtk]=0;b[oppDef]=0;seeds=totalCaptured;continue}if(isMiddleHole(current)){continueLoop=false;break}if(isCornerHole(current)){const pickedSeeds=b[current];b[current]=0;seeds=pickedSeeds;if(seeds>0){steps.push({type:'pickup',idx:current,count:seeds});continue}else{continueLoop=false;break}}}else if(isDefenseRow(current,player)){const pickedSeeds=b[current];b[current]=0;seeds=pickedSeeds;if(seeds>0){steps.push({type:'pickup',idx:current,count:seeds});continue}else{continueLoop=false;break}}}steps.push({type:'complete',board:b});return steps}
+function calculateMoveSteps(board,idx,player){
+  const steps=[];
+  let b=[...board],seeds=b[idx];
+  b[idx]=0;
+  let current=idx;
+  const playerTotal=countPlayerPieces(board,player);
+  const opponent=player===1?2:1;
+  const isSuperSeed=playerTotal===1&&seeds===1;
+  steps.push({type:'pickup',idx,count:seeds,isSuperSeed});
+  let continueLoop=true;
+  let safety=0;
+  while(continueLoop&&safety<100){
+    safety++;
+    if(isSuperSeed&&seeds===1){
+      for(let i=0;i<3;i++){
+        current=nextIndex(current,player);
+        steps.push({type:'jump',idx:current,isSuperSeed})
+      }
+      if(isAttackRow(current,player)){
+        const oppAtk=opponentAttackHouse(current,player),oppDef=opponentDefenseHouse(current,player);
+        let totalCaptured=b[oppAtk]+b[oppDef];
+        if(totalCaptured>0){
+          steps.push({type:'capture',idx:current,oppAtk,oppDef,count:totalCaptured,isSuperSeed});
+          b[oppAtk]=0;
+          b[oppDef]=0;
+          b[current]=1
+        }else{
+          b[current]=1
+        }
+        continueLoop=false;
+        break
+      }else{
+        b[current]=1;
+        continueLoop=false;
+        break
+      }
+    }
+    while(seeds>0){
+      current=nextIndex(current,player);
+      b[current]+=1;
+      seeds-=1;
+      steps.push({type:'drop',idx:current,board:[...b]})
+    }
+    if(b[current]===0){
+      continueLoop=false;
+      break
+    }
+    const hadSeedsBeforeDrop=b[current]>1;
+    if(!hadSeedsBeforeDrop){
+      continueLoop=false;
+      break
+    }
+    if(isAttackRow(current,player)){
+      const oppAtk=opponentAttackHouse(current,player),oppDef=opponentDefenseHouse(current,player);
+      if(b[oppAtk]>0){
+        let totalCaptured=b[oppAtk]+b[oppDef];
+        steps.push({type:'capture',idx:current,oppAtk,oppDef,count:totalCaptured});
+        b[oppAtk]=0;
+        b[oppDef]=0;
+        seeds=totalCaptured;
+        continue
+      }
+      if(isMiddleHole(current)){
+        continueLoop=false;
+        break
+      }
+      if(isCornerHole(current)){
+        const pickedSeeds=b[current];
+        b[current]=0;
+        seeds=pickedSeeds;
+        if(seeds>0){
+          steps.push({type:'pickup',idx:current,count:seeds});
+          continue
+        }else{
+          continueLoop=false;
+          break
+        }
+      }
+    }else if(isDefenseRow(current,player)){
+      const pickedSeeds=b[current];
+      b[current]=0;
+      seeds=pickedSeeds;
+      if(seeds>0){
+        steps.push({type:'pickup',idx:current,count:seeds});
+        continue
+      }else{
+        continueLoop=false;
+        break
+      }
+    }
+  }
+  steps.push({type:'complete',board:b});
+  return steps
+}
 
 function checkGameOver(board,currentPlayer){const p1Total=countPlayerPieces(board,1),p2Total=countPlayerPieces(board,2);if(p1Total===0)return{over:true,winner:2,reason:'Jogador 1 sem pecas'};if(p2Total===0)return{over:true,winner:1,reason:'Jogador 2 sem pecas'};const moves=getValidMoves(board,currentPlayer);if(moves.length===0){const opponent=currentPlayer===1?2:1;return{over:true,winner:opponent,reason:`Jogador ${currentPlayer} sem jogadas validas`}}return{over:false}}
 
@@ -48,7 +141,7 @@ const resetGame=useCallback(()=>{setBoard(createInitialBoard());setCurrentPlayer
 
 const executeMove=useCallback((idx,player)=>{if(gameOver||isAnimating)return;const moves=getValidMoves(board,player);if(!moves.includes(idx))return;const steps=calculateMoveSteps(board,idx,player);setAnimationSteps(steps);setCurrentStepIndex(0);setIsAnimating(true)},[board,gameOver,isAnimating]);
 
-useEffect(()=>{if(!isAnimating||currentStepIndex<0||currentStepIndex>=animationSteps.length){if(isAnimating&&currentStepIndex>=animationSteps.length){const finalStep=animationSteps[animationSteps.length-1];setBoard(finalStep.board);setIsAnimating(false);setCurrentStepIndex(-1);setAnimationSteps([]);setCurrentAnimIdx(null);setIsSuperSeedActive(false);const nextPlayer=currentPlayer===1?2:1,over=checkGameOver(finalStep.board,nextPlayer);if(over.over)setGameOver(over);else setCurrentPlayer(nextPlayer)}return}const step=animationSteps[currentStepIndex];if(step.type==='drop'){playDropSound(step.isSuperSeed);if(step.isSuperSeed)setIsSuperSeedActive(true);setCurrentAnimIdx(step.idx);if(step.board)setBoard(step.board)}else if(step.type==='capture'){showMessage(step.isSuperSeed?'💥 SUPER CAPTURA!':`🎯 Capturou ${step.count} peca(s)!`);setCurrentAnimIdx(step.idx)}else if(step.type==='pickup'){if(step.isSuperSeed)showMessage('⚡ SUPER DADO ATIVADO!');setCurrentAnimIdx(step.idx)}const timer=setTimeout(()=>setCurrentStepIndex(prev=>prev+1),animationSpeed);return()=>clearTimeout(timer)},[isAnimating,currentStepIndex,animationSteps,animationSpeed,currentPlayer,playDropSound,showMessage]);
+useEffect(()=>{if(!isAnimating||currentStepIndex<0||currentStepIndex>=animationSteps.length){if(isAnimating&&currentStepIndex>=animationSteps.length){const finalStep=animationSteps[animationSteps.length-1];setBoard(finalStep.board);setIsAnimating(false);setCurrentStepIndex(-1);setAnimationSteps([]);setCurrentAnimIdx(null);setIsSuperSeedActive(false);const nextPlayer=currentPlayer===1?2:1,over=checkGameOver(finalStep.board,nextPlayer);if(over.over)setGameOver(over);else setCurrentPlayer(nextPlayer)}return}const step=animationSteps[currentStepIndex];if(step.type==='drop'){playDropSound(step.isSuperSeed);if(step.isSuperSeed)setIsSuperSeedActive(true);setCurrentAnimIdx(step.idx);if(step.board)setBoard(step.board)}else if(step.type==='jump'){playDropSound(step.isSuperSeed);if(step.isSuperSeed)setIsSuperSeedActive(true);setCurrentAnimIdx(step.idx)}else if(step.type==='capture'){showMessage(step.isSuperSeed?'💥 SUPER CAPTURA!':`🎯 Capturou ${step.count} peca(s)!`);setCurrentAnimIdx(step.idx)}else if(step.type==='pickup'){if(step.isSuperSeed)showMessage('⚡ SUPER DADO ATIVADO!');setCurrentAnimIdx(step.idx)}const timer=setTimeout(()=>setCurrentStepIndex(prev=>prev+1),animationSpeed);return()=>clearTimeout(timer)},[isAnimating,currentStepIndex,animationSteps,animationSpeed,currentPlayer,playDropSound,showMessage]);
 
 useEffect(()=>{if(mode==='single'&&currentPlayer===2&&!gameOver&&!isAnimating){const timer=setTimeout(()=>{const idx=aiChooseMove(board,2);if(idx!==null)executeMove(idx,2)},700);return()=>clearTimeout(timer)}},[mode,currentPlayer,board,gameOver,isAnimating,executeMove]);
 
