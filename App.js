@@ -31,12 +31,14 @@ function calculateMoveSteps(board,idx,player){
   const playerTotal=countPlayerPieces(board,player);
   const opponent=player===1?2:1;
   const isSuperSeed=playerTotal===1&&seeds===1;
+  let superSeedProcessed=false;
   steps.push({type:'pickup',idx,count:seeds,isSuperSeed});
   let continueLoop=true;
   let safety=0;
   while(continueLoop&&safety<100){
     safety++;
-    if(isSuperSeed&&seeds===1){
+    if(isSuperSeed&&!superSeedProcessed){
+      superSeedProcessed=true;
       for(let i=0;i<3;i++){
         current=nextIndex(current,player);
         steps.push({type:'jump',idx:current,isSuperSeed})
@@ -48,12 +50,14 @@ function calculateMoveSteps(board,idx,player){
           steps.push({type:'capture',idx:current,oppAtk,oppDef,count:totalCaptured,isSuperSeed});
           b[oppAtk]=0;
           b[oppDef]=0;
-          b[current]=1
+          b[current]=1;
+          seeds=totalCaptured;
+          continueLoop=true
         }else{
-          b[current]=1
+          b[current]=1;
+          continueLoop=false;
+          break
         }
-        continueLoop=false;
-        break
       }else{
         b[current]=1;
         continueLoop=false;
